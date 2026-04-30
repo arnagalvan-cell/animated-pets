@@ -27,7 +27,7 @@
     {
       "id": "Halloween_test",
       "name": "HAlloween",
-      "active": true,
+      "active": false,
       "start": "2026-04-29",
       "end": "2026-04-30",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/Halloween_test/"
