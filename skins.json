@@ -43,7 +43,7 @@
     {
       "id": "birthday",
       "name": "Happy birthday !",
-      "active": true,
+      "active": false,
       "start": "2026-01-01",
       "end": "2026-12-31",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/birthday/"
