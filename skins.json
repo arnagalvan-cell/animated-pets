@@ -47,6 +47,14 @@
       "start": "2026-01-01",
       "end": "2026-12-31",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/birthday/"
+    },
+    {
+      "id": "Mothersday",
+      "name": "Mother´s Day",
+      "active": true,
+      "start": "2026-05-04",
+      "end": "2026-05-05",
+      "url": "https://arnagalvan-cell.github.io/animated-pets/skins/Mothersday/"
     }
   ]
 }
