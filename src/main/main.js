@@ -415,30 +415,36 @@ async function checkClickSound() {
     const soundConfig = JSON.parse(configJson)
     if (!soundConfig.file) return
 
-    const soundFile = soundConfig.file // e.g. assets/click_sound.mp3
+    const soundFile = soundConfig.file
     const ext = path.extname(soundFile)
     const localSoundPath = path.join(SKINS_DIR, 'click_sound' + ext)
     const localConfigPath = path.join(SKINS_DIR, 'sound-config.json')
 
-    // Check if we already have this sound
-    const localConfig = fs.existsSync(localConfigPath)
-      ? JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
-      : {}
-
-    if (localConfig.file === soundFile && fs.existsSync(localSoundPath)) return // Already up to date
-
-    // Download new sound
+    // Descargar siempre y comparar por hash para detectar cambios de contenido
     const soundData = await httpGetBinary(SOUND_BASE_URL + soundFile)
     const preview = soundData.slice(0, 10).toString('utf8')
     if (preview.includes('404') || preview.trim().startsWith('<')) return
 
-    fs.writeFileSync(localSoundPath, soundData)
-    fs.writeFileSync(localConfigPath, JSON.stringify({ file: soundFile }))
+    // Calcular hash del nuevo sonido
+    const crypto = require('crypto')
+    const newHash = crypto.createHash('md5').update(soundData).digest('hex')
 
-    // Notify renderer to reload sound
+    // Comparar con hash local
+    const localConfig = fs.existsSync(localConfigPath)
+      ? JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
+      : {}
+
+    if (localConfig.hash === newHash && fs.existsSync(localSoundPath)) return // Sin cambios
+
+    // Guardar nuevo sonido
+    fs.writeFileSync(localSoundPath, soundData)
+    fs.writeFileSync(localConfigPath, JSON.stringify({ file: soundFile, hash: newHash }))
+
+    // Notificar al renderer
     petWindow?.webContents.send('reload-click-sound', {
       soundPath: localSoundPath.replace(/\\/g, '/')
     })
+    console.log('Click sound updated:', soundFile)
   } catch(e) {
     console.log('Sound check failed silently:', e.message)
   }
