@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
+  "version": "2.0.0",
   "files": [
     "src/main/main.js",
     "src/main/preload.js",
