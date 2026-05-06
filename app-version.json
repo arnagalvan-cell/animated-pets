@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "files": [
+    "src/main/main.js",
+    "src/main/preload.js",
+    "src/renderer/pet.html",
+    "src/renderer/shop.html"
+  ],
+  "updatedAt": "2026-05-05"
+}
