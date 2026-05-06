@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Animated Pets Studio</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+
+    .clicks-bar {
+      background: #16213e;
+      border: 1px solid #0f3460;
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .clicks-bar .paw { font-size: 28px; }
+
+    .clicks-bar .amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: #e94560;
+    }
+
+    .clicks-bar .label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .skins-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .skin-card {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.15s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .skin-card:hover { transform: translateY(-2px); border-color: #e94560; }
+    .skin-card.active { border-color: #4ecca3; }
+    .skin-card.locked { opacity: 0.7; }
+
+    .skin-card .emoji { font-size: 40px; margin-bottom: 8px; display: block; }
+    .skin-card .skin-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .skin-card .skin-cost { font-size: 12px; color: #e94560; }
+    .skin-card .skin-cost.free { color: #4ecca3; }
+
+    .badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .badge.equipped  { background: #4ecca3; color: #1a1a2e; }
+    .badge.unlocked  { background: #2a5298; color: #fff; }
+    .badge.locked    { background: #333; color: #888; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn.equip   { background: #4ecca3; color: #1a1a2e; }
+    .btn.buy     { background: #e94560; color: #fff; }
+    .btn.nocoins { background: #333; color: #666; cursor: not-allowed; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4ecca3;
+      color: #1a1a2e;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <h1 id="shop-title">🛍️ Animated Pets Studio</h1>
+  <p class="subtitle">Earn clicks by clicking on your pet</p>
+
+  <div class="clicks-bar">
+    <span class="paw">🐾</span>
+    <div>
+      <div class="amount" id="click-count">0</div>
+      <div class="label">clicks available</div>
+    </div>
+  </div>
+
+  <div class="skins-grid" id="skins-grid"></div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let config, state
+
+    async function init() {
+      config = await window.petAPI.getConfig()
+      state  = await window.petAPI.getState()
+      render()
+    }
+
+    function render() {
+      document.getElementById('shop-title').textContent = `🛍️ Animated Pets Studio`
+      document.getElementById('click-count').textContent = state.clicks.toLocaleString()
+
+      const grid = document.getElementById('skins-grid')
+      grid.innerHTML = ''
+
+      config.pet.skins.forEach(skin => {
+        const isUnlocked = state.unlockedSkins.includes(skin.id)
+        const isActive   = state.skin === skin.id
+        const canAfford  = state.clicks >= skin.cost
+
+        const card = document.createElement('div')
+        card.className = `skin-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`
+
+        const emojis = { default:'🐕', navidad:'🎄', pirata:'🏴‍☠️', astronauta:'🚀', halloween:'🎃' }
+        const emoji = emojis[skin.id] || '🎨'
+
+        let badgeClass = isActive ? 'equipped' : isUnlocked ? 'unlocked' : 'locked'
+        let badgeText  = isActive ? 'Equipped' : isUnlocked ? 'Unlocked' : '🔒'
+
+        let btnHtml = ''
+        if (isActive) {
+          btnHtml = `<button class="btn equip" disabled>✓ Equipped</button>`
+        } else if (isUnlocked) {
+          btnHtml = `<button class="btn equip" onclick="equipSkin('${skin.id}')">Equip</button>`
+        } else if (canAfford) {
+          btnHtml = `<button class="btn buy" onclick="buySkin('${skin.id}', ${skin.cost})">Buy · ${skin.cost} 🐾</button>`
+        } else {
+          btnHtml = `<button class="btn nocoins" disabled>Need ${skin.cost - state.clicks} more 🐾</button>`
+        }
+
+        card.innerHTML = `
+          <span class="badge ${badgeClass}">${badgeText}</span>
+          <span class="emoji">${emoji}</span>
+          <div class="skin-name">${skin.name}</div>
+          <div class="skin-cost ${skin.cost === 0 ? 'free' : ''}">${skin.cost === 0 ? 'Free' : skin.cost + ' clicks'}</div>
+          ${btnHtml}
+        `
+        grid.appendChild(card)
+      })
+    }
+
+    async function buySkin(id, cost) {
+      const ok = await window.petAPI.spendClicks(cost)
+      if (!ok) { showToast('Not enough clicks!', false); return }
+      state.clicks -= cost
+      state.unlockedSkins.push(id)
+      window.petAPI.unlockSkin(id)
+      equipSkin(id)
+      showToast('Skin unlocked! 🎉', true)
+    }
+
+    function equipSkin(id) {
+      state.skin = id
+      window.petAPI.setSkin(id)
+      render()
+      showToast('Skin equipped!', true)
+    }
+
+    function showToast(msg, success) {
+      const t = document.getElementById('toast')
+      t.textContent = msg
+      t.style.background = success ? '#4ecca3' : '#e94560'
+      t.style.color = success ? '#1a1a2e' : '#fff'
+      t.classList.add('show')
+      setTimeout(() => t.classList.remove('show'), 2500)
+    }
+
+    // Live updates from main process
+    window.petAPI.onStateUpdated((newState) => {
+      state = newState
+      render()
+    })
+
+    init()
+  </script>
+</body>
+</html>
