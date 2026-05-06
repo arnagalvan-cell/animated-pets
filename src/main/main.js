@@ -656,21 +656,7 @@ app.whenReady().then(async () => {
   createTray()
   // Al arrancar: cargar sonido — primero buscar bundled en assets, luego caché local
   setTimeout(() => {
-    // 1. Sonido incluido en el instalador (assets/click_sound.*)
-    const appDir = path.join(__dirname, '..', '..')  // resources/app
-    const exts = ['.mp3', '.wav', '.ogg']
-    let bundledSound = null
-    for (const ext of exts) {
-      const p = path.join(appDir, 'assets', 'click_sound' + ext)
-      if (fs.existsSync(p)) { bundledSound = p; break }
-    }
-    if (bundledSound) {
-      petWindow?.webContents.send('reload-click-sound', {
-        soundPath: bundledSound.replace(/\\/g, '/')
-      })
-      return
-    }
-    // 2. Fallback: caché local descargado de GitHub
+    // 1. Primero verificar si hay sonido actualizado descargado de GitHub (tiene prioridad)
     const localConfigPath = path.join(SKINS_DIR, 'sound-config.json')
     if (fs.existsSync(localConfigPath)) {
       try {
@@ -681,8 +667,21 @@ app.whenReady().then(async () => {
           petWindow?.webContents.send('reload-click-sound', {
             soundPath: localSoundPath.replace(/\\/g, '/')
           })
+          return
         }
       } catch(e) {}
+    }
+    // 2. Fallback: sonido bundled incluido en el instalador
+    const appDir = path.join(__dirname, '..', '..')
+    const exts = ['.mp3', '.wav', '.ogg']
+    for (const ext of exts) {
+      const p = path.join(appDir, 'assets', 'click_sound' + ext)
+      if (fs.existsSync(p)) {
+        petWindow?.webContents.send('reload-click-sound', {
+          soundPath: p.replace(/\\/g, '/')
+        })
+        break
+      }
     }
   }, 2000)
 
