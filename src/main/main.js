@@ -19,11 +19,15 @@ let SKINS_DIR = null
 // When you have GitHub ready, replace this URL
 // with your actual GitHub Pages URL
 // ============================================
-const SKINS_SERVER_URL = 'https://arnagalvan-cell.github.io/animated-pets/skins.json'
-const SOUND_CONFIG_URL = 'https://arnagalvan-cell.github.io/animated-pets/sound-config.json'
-const SOUND_BASE_URL   = 'https://arnagalvan-cell.github.io/animated-pets/'
-const VERSION_URL     = 'https://arnagalvan-cell.github.io/animated-pets/app-version.json'
-const RAW_BASE_URL    = 'https://raw.githubusercontent.com/arnagalvan-cell/animated-pets/main'
+// GitHub URLs from pet-config (set at build time by the builder)
+const GITHUB_USER      = config.github?.user || 'arnagalvan-cell'
+const GITHUB_REPO      = config.github?.repo || 'animated-pets'
+const PAGES_BASE       = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`
+const SKINS_SERVER_URL = `${PAGES_BASE}/skins.json`
+const SOUND_CONFIG_URL = `${PAGES_BASE}/sound-config.json`
+const SOUND_BASE_URL   = `${PAGES_BASE}/`
+const VERSION_URL      = `${PAGES_BASE}/app-version.json`
+const RAW_BASE_URL     = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main`
 const LOCAL_VERSION_FILE = path.join(__dirname, 'version.json')
 
 function getLocalVersion() {
@@ -161,10 +165,6 @@ async function checkLicenseKey() {
   if (activatedKey === licenseKey) return true // Already activated
 
   // Ask for license key
-  const result = await dialog.showInputBox ? 
-    dialog.showInputBox(null, { title: 'License Key', message: 'Enter your 6-character license key:', type: 'question' }) :
-    null
-
   // Use custom dialog via BrowserWindow
   return new Promise((resolve) => {
     const keyWin = new BrowserWindow({
@@ -676,7 +676,7 @@ app.whenReady().then(async () => {
     if (fs.existsSync(localConfigPath)) {
       try {
         const sc = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
-        const ext = path.extname(sc.file || '.mp3')
+        const ext = (sc.file && path.extname(sc.file)) || '.mp3'
         const localSoundPath = path.join(SKINS_DIR, 'click_sound' + ext)
         if (fs.existsSync(localSoundPath)) {
           petWindow?.webContents.send('reload-click-sound', {
