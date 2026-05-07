@@ -409,45 +409,60 @@ ipcMain.on('save-scale', (_, s) => { store.set('scale', s); updateTrayMenu() })
 
 async function checkClickSound() {
   try {
+    // Asegurar que el directorio existe
+    if (!SKINS_DIR) { console.log('[sound] SKINS_DIR no inicializado'); return }
+    if (!fs.existsSync(SKINS_DIR)) fs.mkdirSync(SKINS_DIR, { recursive: true })
+
+    console.log('[sound] Checking:', SOUND_CONFIG_URL)
     const configJson = await httpGet(SOUND_CONFIG_URL)
-    if (!configJson || configJson.trim().startsWith('<') || configJson.includes('404')) return
+    console.log('[sound] Config response:', configJson?.slice(0, 100))
+    if (!configJson || configJson.trim().startsWith('<') || configJson.includes('404')) {
+      console.log('[sound] Invalid config response')
+      return
+    }
 
     const soundConfig = JSON.parse(configJson)
-    if (!soundConfig.file) return
+    if (!soundConfig.file) { console.log('[sound] No file in config'); return }
 
     const soundFile = soundConfig.file
     const ext = path.extname(soundFile)
     const localSoundPath = path.join(SKINS_DIR, 'click_sound' + ext)
     const localConfigPath = path.join(SKINS_DIR, 'sound-config.json')
 
-    // Descargar siempre y comparar por hash para detectar cambios de contenido
+    console.log('[sound] Downloading:', SOUND_BASE_URL + soundFile)
     const soundData = await httpGetBinary(SOUND_BASE_URL + soundFile)
-    const preview = soundData.slice(0, 10).toString('utf8')
-    if (preview.includes('404') || preview.trim().startsWith('<')) return
+    console.log('[sound] Downloaded bytes:', soundData?.length)
+    if (!soundData || soundData.length < 100) { console.log('[sound] Invalid sound data'); return }
 
-    // Calcular hash del nuevo sonido
+    const preview = soundData.slice(0, 10).toString('utf8')
+    if (preview.includes('404') || preview.trim().startsWith('<')) {
+      console.log('[sound] Sound file returned error page')
+      return
+    }
+
     const crypto = require('crypto')
     const newHash = crypto.createHash('md5').update(soundData).digest('hex')
+    console.log('[sound] New hash:', newHash)
 
-    // Comparar con hash local
     const localConfig = fs.existsSync(localConfigPath)
       ? JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
       : {}
 
-    // Solo saltar si tenemos hash previo Y coincide Y el archivo existe
-    if (localConfig.hash && localConfig.hash === newHash && fs.existsSync(localSoundPath)) return
+    if (localConfig.hash && localConfig.hash === newHash && fs.existsSync(localSoundPath)) {
+      console.log('[sound] Already up to date')
+      return
+    }
 
-    // Guardar nuevo sonido
     fs.writeFileSync(localSoundPath, soundData)
     fs.writeFileSync(localConfigPath, JSON.stringify({ file: soundFile, hash: newHash }))
+    console.log('[sound] Saved to:', localSoundPath)
 
-    // Notificar al renderer
     petWindow?.webContents.send('reload-click-sound', {
       soundPath: localSoundPath.replace(/\\/g, '/')
     })
-    console.log('Click sound updated:', soundFile)
+    console.log('[sound] Updated successfully:', soundFile)
   } catch(e) {
-    console.log('Sound check failed silently:', e.message)
+    console.log('[sound] Error:', e.message)
   }
 }
 
