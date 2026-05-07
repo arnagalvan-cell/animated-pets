@@ -440,21 +440,20 @@ async function checkClickSound() {
       return
     }
 
-    const crypto = require('crypto')
-    const newHash = crypto.createHash('md5').update(soundData).digest('hex')
-    console.log('[sound] New hash:', newHash)
-
     const localConfig = fs.existsSync(localConfigPath)
       ? JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
       : {}
 
-    if (localConfig.hash && localConfig.hash === newHash && fs.existsSync(localSoundPath)) {
+    // Comparar por updatedAt (timestamp del servidor) — siempre detecta cambios
+    const remoteTimestamp = soundConfig.updatedAt || 0
+    const localTimestamp  = localConfig.updatedAt  || 0
+    if (remoteTimestamp && remoteTimestamp === localTimestamp && fs.existsSync(localSoundPath)) {
       console.log('[sound] Already up to date')
       return
     }
 
     fs.writeFileSync(localSoundPath, soundData)
-    fs.writeFileSync(localConfigPath, JSON.stringify({ file: soundFile, hash: newHash }))
+    fs.writeFileSync(localConfigPath, JSON.stringify({ file: soundFile, updatedAt: remoteTimestamp }))
     console.log('[sound] Saved to:', localSoundPath)
 
     petWindow?.webContents.send('reload-click-sound', {
