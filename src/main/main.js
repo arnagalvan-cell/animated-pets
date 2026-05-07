@@ -434,7 +434,8 @@ async function checkClickSound() {
       ? JSON.parse(fs.readFileSync(localConfigPath, 'utf8'))
       : {}
 
-    if (localConfig.hash === newHash && fs.existsSync(localSoundPath)) return // Sin cambios
+    // Solo saltar si tenemos hash previo Y coincide Y el archivo existe
+    if (localConfig.hash && localConfig.hash === newHash && fs.existsSync(localSoundPath)) return
 
     // Guardar nuevo sonido
     fs.writeFileSync(localSoundPath, soundData)
