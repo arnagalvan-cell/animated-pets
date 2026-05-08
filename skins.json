@@ -7,6 +7,14 @@
       "start": "2026-04-30",
       "end": "2026-05-01",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/diadelpadre/"
+    },
+    {
+      "id": "Halloween_Test",
+      "name": "Halloween_Test",
+      "active": true,
+      "start": "2026-05-08",
+      "end": "2026-05-09",
+      "url": "https://arnagalvan-cell.github.io/animated-pets/skins/Halloween_Test/"
     }
   ]
 }
