@@ -15,6 +15,14 @@
       "start": "2026-05-08",
       "end": "2026-05-09",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/Halloween_Test/"
+    },
+    {
+      "id": "birthday",
+      "name": "Happy Birthday",
+      "active": true,
+      "start": "2026-01-01",
+      "end": "2026-12-31",
+      "url": "https://arnagalvan-cell.github.io/animated-pets/skins/birthday/"
     }
   ]
 }
