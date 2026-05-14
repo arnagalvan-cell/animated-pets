@@ -27,7 +27,7 @@
     {
       "id": "Mothers_sday",
       "name": "mother´sday 2026",
-      "active": true,
+      "active": false,
       "start": "2026-05-10",
       "end": "2026-05-11",
       "url": "https://arnagalvan-cell.github.io/animated-pets/skins/Mothers_sday/"
